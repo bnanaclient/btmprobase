@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMT ProBase</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #000; --bg1: #080808; --bg2: #0d0d0d; --bg3: #131313; --bg4: #1a1a1a;
+  --border: #1e1e1e; --border2: #282828;
+  --text: #e0e0e0; --text2: #c0c0c0; --text3: #888; --text4: #444; --text5: #2a2a2a;
+  --accent: #4a7a4a; --accent-dim: #1e2e1e; --label: #333;
+  --sidebar-w: 210px;
+}
+body.theme-midnight { --bg:#000510;--bg1:#050a18;--bg2:#0a1020;--bg3:#101828;--bg4:#1a2440;--border:#1a2840;--border2:#243050;--text:#d0dff0;--text2:#a0b8d0;--text3:#607090;--text4:#304060;--text5:#1a2a40;--accent:#4466cc;--accent-dim:#0a1430;--label:#2a3a5a; }
+body.theme-ember    { --bg:#0a0500;--bg1:#150a00;--bg2:#1a0e00;--bg3:#221400;--bg4:#2e1a00;--border:#2e1a00;--border2:#3a2200;--text:#f0e0c0;--text2:#d0b890;--text3:#907050;--text4:#503820;--text5:#281a08;--accent:#cc7722;--accent-dim:#1e0e00;--label:#4a2e10; }
+body.theme-vapor    { --bg:#080010;--bg1:#0e0018;--bg2:#140020;--bg3:#1c0030;--bg4:#280050;--border:#280050;--border2:#340068;--text:#e8d0ff;--text2:#c8a8e8;--text3:#8060a0;--text4:#4a3060;--text5:#200840;--accent:#cc44cc;--accent-dim:#1a0028;--label:#4a2060; }
+body.theme-matrix   { --bg:#000500;--bg1:#020800;--bg2:#040e00;--bg3:#061200;--bg4:#0a1a00;--border:#0a1a00;--border2:#122200;--text:#c0f0c0;--text2:#88c888;--text3:#408040;--text4:#204020;--text5:#081208;--accent:#22cc44;--accent-dim:#081200;--label:#1a4020; }
+body.theme-arctic   { --bg:#f8f9fa;--bg1:#f0f2f5;--bg2:#e8eaed;--bg3:#dde0e5;--bg4:#ccd0d8;--border:#d0d5de;--border2:#bcc3ce;--text:#1a1e2a;--text2:#3a4050;--text3:#6a7088;--text4:#a0a8b8;--text5:#c8cdd8;--accent:#2255cc;--accent-dim:#dde4f8;--label:#8090a8; }
+
+body { font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text); height:100dvh; display:flex; flex-direction:row; overflow:hidden; transition:background 0.3s,color 0.3s; }
+
+/* SIDEBAR */
+#sidebar { width:var(--sidebar-w); flex-shrink:0; background:var(--bg1); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; transition:width 0.22s ease,opacity 0.22s ease; }
+#sidebar.collapsed { width:0; opacity:0; pointer-events:none; }
+.sidebar-header { padding:11px 10px 9px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:7px; flex-shrink:0; }
+.sidebar-top { display:flex; align-items:center; justify-content:space-between; }
+.sidebar-top span { font-size:10px; font-weight:500; letter-spacing:1px; text-transform:uppercase; color:var(--label); font-family:'IBM Plex Mono',monospace; }
+.new-chat-btn { display:flex; align-items:center; gap:6px; width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:7px 10px; color:var(--text3); font-size:12px; font-family:'IBM Plex Mono',monospace; cursor:pointer; transition:all 0.15s; letter-spacing:0.3px; }
+.new-chat-btn:hover { background:var(--bg3); color:var(--text2); }
+#sessions-list { flex:1; overflow-y:auto; padding:7px 7px; display:flex; flex-direction:column; gap:2px; }
+#sessions-list::-webkit-scrollbar { width:2px; }
+#sessions-list::-webkit-scrollbar-thumb { background:var(--bg4); }
+.session-item { display:flex; align-items:center; border-radius:7px; cursor:pointer; transition:background 0.12s; overflow:hidden; }
+.session-item:hover { background:var(--bg3); }
+.session-item.active { background:var(--bg3); border:1px solid var(--border2); }
+.session-item-name { flex:1; padding:7px 9px; font-size:12px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.4; }
+.session-item.active .session-item-name { color:var(--text2); }
+.session-del { background:none; border:none; color:var(--text5); cursor:pointer; padding:6px 7px; font-size:14px; transition:color 0.15s; flex-shrink:0; line-height:1; }
+.session-del:hover { color:#774444; }
+.sidebar-footer { padding:9px 9px; border-top:1px solid var(--border); flex-shrink:0; }
+.memory-badge { display:flex; align-items:center; gap:6px; padding:7px 10px; background:var(--bg2); border:1px solid var(--border); border-radius:8px; cursor:pointer; font-size:11px; color:var(--text4); font-family:'IBM Plex Mono',monospace; transition:all 0.15s; letter-spacing:0.3px; width:100%; }
+.memory-badge:hover { background:var(--bg3); color:var(--text3); }
+.memory-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; animation:pulse 2s ease infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+/* MAIN */
+#main { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+header { padding:11px 15px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.header-left { display:flex; align-items:center; gap:8px; }
+#sidebar-toggle { background:none; border:none; color:var(--text4); cursor:pointer; font-size:15px; padding:2px 4px; transition:color 0.15s; line-height:1; }
+#sidebar-toggle:hover { color:var(--text3); }
+header h1 { font-size:13px; font-weight:500; font-family:'IBM Plex Mono',monospace; letter-spacing:0.5px; }
+header h1 span { color:var(--text4); font-weight:300; }
+.header-btns { display:flex; gap:5px; }
+.icon-btn { width:30px; height:30px; background:var(--bg2); border:1px solid var(--border); border-radius:7px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text4); font-size:13px; transition:all 0.15s; }
+.icon-btn:hover { background:var(--bg3); color:var(--text3); }
+.icon-btn.active { color:var(--accent); border-color:var(--accent-dim); }
+
+#chat { flex:1; overflow-y:auto; padding:18px 16px; display:flex; flex-direction:column; gap:13px; scroll-behavior:smooth; }
+#chat::-webkit-scrollbar { width:3px; }
+#chat::-webkit-scrollbar-thumb { background:var(--bg4); border-radius:3px; }
+#empty-state { flex:1; display:flex; align-items:center; justify-content:center; color:var(--text5); font-size:12px; font-family:'IBM Plex Mono',monospace; }
+
+.msg-user { align-self:flex-end; max-width:72%; background:var(--bg3); border:1px solid var(--border2); border-radius:14px; border-bottom-right-radius:3px; padding:10px 14px; font-size:14px; line-height:1.65; color:var(--text2); animation:fadeUp 0.15s ease; }
+.msg-user .img-preview { max-width:200px; max-height:150px; border-radius:8px; display:block; margin-bottom:6px; object-fit:cover; }
+.msg-user .file-chip { display:inline-flex; align-items:center; gap:5px; background:var(--bg4); border:1px solid var(--border2); border-radius:6px; padding:4px 9px; font-size:12px; color:var(--text4); margin-bottom:5px; font-family:'IBM Plex Mono',monospace; }
+.msg-ts { font-size:10px; color:var(--text5); font-family:'IBM Plex Mono',monospace; margin-top:4px; }
+.msg-user .msg-ts { text-align:right; color:var(--text4); }
+
+.msg-bot { align-self:flex-start; max-width:82%; display:flex; flex-direction:column; gap:7px; animation:fadeUp 0.15s ease; }
+.bot-label { font-size:10px; color:var(--label); font-weight:500; letter-spacing:0.5px; text-transform:uppercase; font-family:'IBM Plex Mono',monospace; }
+.bot-prose { font-size:14px; line-height:1.75; color:var(--text2); }
+.bot-prose p { margin-bottom:8px; } .bot-prose p:last-child { margin-bottom:0; }
+.bot-prose strong { color:var(--text); font-weight:500; } .bot-prose em { font-style:italic; color:var(--text3); }
+.bot-prose ul,.bot-prose ol { padding-left:18px; margin:6px 0; } .bot-prose li { margin-bottom:4px; }
+.bot-prose h1,.bot-prose h2,.bot-prose h3 { color:var(--text); font-weight:500; margin:10px 0 4px; }
+.bot-prose h1{font-size:17px;} .bot-prose h2{font-size:15px;} .bot-prose h3{font-size:14px;}
+.bot-prose code { font-family:'IBM Plex Mono',monospace; font-size:12px; background:var(--bg1); border:1px solid var(--border); border-radius:4px; padding:1px 5px; color:var(--text3); }
+.bot-prose a { color:var(--text3); text-decoration:underline; }
+.bot-prose blockquote { border-left:2px solid var(--border2); padding-left:12px; color:var(--text3); margin:6px 0; }
+
+.content-block { background:var(--bg1); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.block-header { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; border-bottom:1px solid var(--border); background:var(--bg2); }
+.block-label { font-size:11px; color:var(--label); font-weight:500; letter-spacing:0.4px; text-transform:uppercase; font-family:'IBM Plex Mono',monospace; }
+.copy-btn { display:flex; align-items:center; gap:4px; background:var(--bg3); border:1px solid var(--border2); border-radius:5px; padding:3px 9px; color:var(--text4); font-size:11px; cursor:pointer; transition:all 0.15s; }
+.copy-btn:hover { background:var(--bg4); color:var(--text3); }
+.copy-btn.copied { color:var(--accent); border-color:var(--accent-dim); }
+.block-text { padding:14px 16px; font-size:14px; line-height:1.75; color:var(--text2); white-space:pre-wrap; word-break:break-word; }
+.code-block { background:var(--bg1); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.code-header { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; border-bottom:1px solid var(--border); background:var(--bg2); }
+.code-lang { font-size:11px; color:var(--label); font-family:'IBM Plex Mono',monospace; }
+.code-body { padding:14px 16px; overflow-x:auto; font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.7; color:var(--text3); white-space:pre; }
+.code-body::-webkit-scrollbar { height:3px; }
+.code-body::-webkit-scrollbar-thumb { background:var(--bg4); }
+
+.typing { align-self:flex-start; display:flex; gap:4px; align-items:center; padding:11px 14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; border-bottom-left-radius:3px; }
+.typing span { width:4px; height:4px; background:var(--border2); border-radius:50%; animation:blink 1.2s ease infinite; }
+.typing span:nth-child(2){animation-delay:0.2s;} .typing span:nth-child(3){animation-delay:0.4s;}
+
+@keyframes blink{0%,60%,100%{background:var(--border2)}30%{background:var(--text4)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+footer { padding:8px 13px 12px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:7px; flex-shrink:0; }
+#attachment-preview { display:none; align-items:center; gap:8px; padding:5px 10px; background:var(--bg2); border:1px solid var(--border); border-radius:8px; font-size:12px; color:var(--text4); }
+#attachment-preview img { width:28px; height:28px; border-radius:4px; object-fit:cover; }
+#att-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'IBM Plex Mono',monospace; font-size:11px; }
+#remove-att { background:none; border:none; color:var(--text4); cursor:pointer; font-size:16px; line-height:1; transition:color 0.15s; }
+#remove-att:hover { color:var(--text3); }
+.input-row { display:flex; gap:7px; align-items:flex-end; }
+#attach-btn { width:36px; height:36px; background:var(--bg2); border:1px solid var(--border); border-radius:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--text4); font-size:17px; transition:all 0.15s; }
+#attach-btn:hover { background:var(--bg3); color:var(--text3); }
+#input { flex:1; background:var(--bg1); border:1px solid var(--border); border-radius:9px; padding:9px 13px; color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:14px; resize:none; outline:none; min-height:36px; max-height:130px; line-height:1.5; transition:border-color 0.2s; }
+#input::placeholder { color:var(--text5); }
+#input:focus { border-color:var(--border2); }
+#send { width:36px; height:36px; background:var(--bg2); border:1px solid var(--border); border-radius:9px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.15s; }
+#send:hover { background:var(--bg3); }
+#send:disabled { opacity:0.2; cursor:not-allowed; }
+#send svg { width:13px; height:13px; fill:var(--text3); }
+#file-input { display:none; }
+
+/* MEMORY PANEL */
+#memory-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(5px); z-index:200; animation:overlayIn 0.2s ease; align-items:center; justify-content:center; }
+#memory-overlay.open { display:flex; }
+#memory-panel { width:460px; max-width:94vw; max-height:82dvh; background:var(--bg1); border:1px solid var(--border); border-radius:14px; display:flex; flex-direction:column; overflow:hidden; animation:slideIn 0.2s ease; }
+.mem-hdr { padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.mem-hdr h2 { font-size:13px; font-weight:500; font-family:'IBM Plex Mono',monospace; letter-spacing:0.5px; }
+.mem-body { flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
+.mem-body::-webkit-scrollbar { width:3px; } .mem-body::-webkit-scrollbar-thumb { background:var(--bg4); }
+.mem-desc { font-size:12px; color:var(--text4); line-height:1.6; }
+#memory-list { display:flex; flex-direction:column; gap:5px; }
+.memory-entry { display:flex; align-items:flex-start; gap:8px; padding:8px 10px; background:var(--bg2); border:1px solid var(--border); border-radius:8px; }
+.memory-entry-text { flex:1; font-size:13px; color:var(--text2); line-height:1.5; }
+.memory-entry-del { background:none; border:none; color:var(--text5); cursor:pointer; font-size:15px; padding:0 3px; transition:color 0.15s; flex-shrink:0; }
+.memory-entry-del:hover { color:#774444; }
+#no-memories { font-size:12px; color:var(--text5); font-family:'IBM Plex Mono',monospace; text-align:center; padding:20px 0; }
+.mem-ftr { padding:11px 15px; border-top:1px solid var(--border); display:flex; gap:7px; flex-shrink:0; }
+#new-memory-input { flex:1; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:8px 11px; color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; outline:none; transition:border-color 0.2s; }
+#new-memory-input::placeholder { color:var(--text5); }
+#new-memory-input:focus { border-color:var(--border2); }
+#add-memory-btn { background:var(--bg3); border:1px solid var(--border2); border-radius:8px; padding:8px 13px; color:var(--text3); font-size:12px; font-family:'IBM Plex Mono',monospace; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+#add-memory-btn:hover { background:var(--bg4); color:var(--text2); }
+.close-panel { background:none; border:none; color:var(--text4); cursor:pointer; font-size:20px; line-height:1; transition:color 0.15s; padding:2px 6px; }
+.close-panel:hover { color:var(--text3); }
+.mem-learning { display:flex; align-items:center; gap:7px; font-size:11px; color:var(--text4); font-family:'IBM Plex Mono',monospace; padding:4px 0; }
+.mem-learning::before { content:''; display:inline-block; width:8px; height:8px; border:1.5px solid var(--text4); border-top-color:transparent; border-radius:50%; animation:spin 0.7s linear infinite; }
+
+/* SETTINGS */
+#settings-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:100; animation:overlayIn 0.2s ease; align-items:flex-start; justify-content:flex-end; }
+#settings-overlay.open { display:flex; }
+#settings-panel { width:330px; max-width:100vw; height:100dvh; background:var(--bg1); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; animation:slideIn 0.2s ease; }
+.settings-header { padding:13px 15px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.settings-header h2 { font-size:13px; font-weight:500; font-family:'IBM Plex Mono',monospace; letter-spacing:0.5px; }
+.settings-body { flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:20px; }
+.settings-body::-webkit-scrollbar { width:3px; } .settings-body::-webkit-scrollbar-thumb { background:var(--bg4); }
+.stitle { font-size:10px; font-weight:500; letter-spacing:1px; text-transform:uppercase; color:var(--label); font-family:'IBM Plex Mono',monospace; margin-bottom:9px; }
+.theme-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.theme-swatch { border-radius:9px; overflow:hidden; cursor:pointer; border:2px solid transparent; transition:border-color 0.15s,transform 0.15s; }
+.theme-swatch:hover { transform:scale(1.03); } .theme-swatch.active { border-color:var(--accent); }
+.theme-swatch-inner { height:48px; display:flex; flex-direction:column; justify-content:flex-end; padding:5px 7px; }
+.theme-swatch-name { font-size:10px; font-weight:500; font-family:'IBM Plex Mono',monospace; }
+.personality-textarea { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:9px 11px; color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; line-height:1.6; resize:vertical; min-height:78px; outline:none; transition:border-color 0.2s; }
+.personality-textarea::placeholder { color:var(--text5); } .personality-textarea:focus { border-color:var(--border2); }
+.personality-presets { display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+.preset-chip { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:3px 10px; font-size:11px; color:var(--text4); cursor:pointer; font-family:'IBM Plex Sans',sans-serif; transition:all 0.15s; }
+.preset-chip:hover { background:var(--bg3); color:var(--text3); border-color:var(--border2); }
+.preset-chip.active { background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+.toggle-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+.toggle-row:last-child { border-bottom:none; }
+.toggle-info { display:flex; flex-direction:column; gap:2px; }
+.toggle-label { font-size:13px; color:var(--text2); }
+.toggle-desc { font-size:11px; color:var(--text4); }
+.toggle-switch { position:relative; width:34px; height:19px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; position:absolute; }
+.toggle-track { position:absolute; inset:0; background:var(--bg4); border-radius:10px; cursor:pointer; transition:background 0.2s; border:1px solid var(--border2); }
+.toggle-switch input:checked + .toggle-track { background:var(--accent); border-color:var(--accent); }
+.toggle-track::after { content:''; position:absolute; width:13px; height:13px; background:var(--text3); border-radius:50%; top:2px; left:2px; transition:transform 0.2s,background 0.2s; }
+.toggle-switch input:checked + .toggle-track::after { transform:translateX(15px); background:#fff; }
+.save-btn { width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:8px; padding:9px; color:var(--text2); font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.5px; cursor:pointer; transition:all 0.15s; }
+.save-btn:hover { background:var(--bg4); color:var(--text); }
+.save-btn.saved { color:var(--accent); border-color:var(--accent-dim); }
+.setting-input { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:7px; padding:8px 11px; color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:13px; outline:none; transition:border-color 0.2s; }
+.setting-input::placeholder { color:var(--text5); } .setting-input:focus { border-color:var(--border2); }
+.srow { display:flex; flex-direction:column; gap:5px; }
+.srow label { font-size:10px; color:var(--text4); font-family:'IBM Plex Mono',monospace; letter-spacing:0.3px; text-transform:uppercase; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-top"><span>Chats</span></div>
+    <button class="new-chat-btn" id="new-chat-btn">＋ New Chat</button>
+  </div>
+  <div id="sessions-list"></div>
+  <div class="sidebar-footer">
+    <button class="memory-badge" id="memory-open-btn">
+      <div class="memory-dot"></div>
+      Memory
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <header>
+    <div class="header-left">
+      <button id="sidebar-toggle" title="Toggle sidebar">☰</button>
+      <h1 id="header-title">BMT ProBase <span>/ AI</span></h1>
+    </div>
+    <div class="header-btns">
+      <button class="icon-btn" id="clear-btn" title="Clear chat">⌫</button>
+      <button class="icon-btn" id="settings-btn" title="Settings">⚙</button>
+    </div>
+  </header>
+  <div id="chat"><div id="empty-state">send a message to start</div></div>
+  <footer>
+    <div id="attachment-preview">
+      <img id="att-img" src="" style="display:none"/>
+      <span id="att-icon" style="display:none">📄</span>
+      <span id="att-name"></span>
+      <button id="remove-att">×</button>
+    </div>
+    <div class="input-row">
+      <button id="attach-btn" title="Attach">⊕</button>
+      <input type="file" id="file-input" accept="image/*,.pdf,.txt,.js,.ts,.py,.html,.css,.json,.csv,.md,.jsx,.tsx">
+      <textarea id="input" placeholder="Message..." rows="1"></textarea>
+      <button id="send"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+    </div>
+  </footer>
+</div>
+
+<!-- MEMORY OVERLAY -->
+<div id="memory-overlay">
+  <div id="memory-panel">
+    <div class="mem-hdr">
+      <h2>🧠 Memory</h2>
+      <button class="close-panel" id="close-memory">×</button>
+    </div>
+    <div class="mem-body">
+      <div class="mem-desc">Things the AI remembers about you across all chats. Learned automatically, editable manually.</div>
+      <div id="memory-list"></div>
+    </div>
+    <div class="mem-ftr">
+      <input type="text" id="new-memory-input" placeholder="Add a memory manually…" maxlength="200">
+      <button id="add-memory-btn">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div id="settings-overlay">
+  <div id="settings-panel">
+    <div class="settings-header">
+      <h2>⚙ Settings</h2>
+      <button class="close-panel" id="close-settings">×</button>
+    </div>
+    <div class="settings-body">
+      <div>
+        <div class="stitle">Identity</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="srow"><label>AI Name</label><input type="text" class="setting-input" id="ai-name-input" placeholder="ProBase" maxlength="30"></div>
+          <div class="srow"><label>Header Title</label><input type="text" class="setting-input" id="header-title-input" placeholder="BMT ProBase" maxlength="40"></div>
+        </div>
+      </div>
+      <div>
+        <div class="stitle">Personality</div>
+        <textarea class="personality-textarea" id="personality-input" placeholder="Describe how the AI should act…"></textarea>
+        <div class="personality-presets">
+          <button class="preset-chip active" data-preset="default">Default</button>
+          <button class="preset-chip" data-preset="professional">Professional</button>
+          <button class="preset-chip" data-preset="casual">Casual</button>
+          <button class="preset-chip" data-preset="concise">Ultra-concise</button>
+          <button class="preset-chip" data-preset="tutor">Tutor</button>
+          <button class="preset-chip" data-preset="sarcastic">Sarcastic</button>
+        </div>
+      </div>
+      <div>
+        <div class="stitle">Theme</div>
+        <div class="theme-grid" id="theme-grid">
+          <div class="theme-swatch active" data-theme="default"><div class="theme-swatch-inner" style="background:linear-gradient(135deg,#0a0a0a,#1a1a1a)"><span class="theme-swatch-name" style="color:#555">Void</span></div></div>
+          <div class="theme-swatch" data-theme="midnight"><div class="theme-swatch-inner" style="background:linear-gradient(135deg,#050a18,#1a2440)"><span class="theme-swatch-name" style="color:#4466cc">Midnight</span></div></div>
+          <div class="theme-swatch" data-theme="ember"><div class="theme-swatch-inner" style="background:linear-gradient(135deg,#150a00,#2e1a00)"><span class="theme-swatch-name" style="color:#cc7722">Ember</span></div></div>
+          <div class="theme-swatch" data-theme="vapor"><div class="theme-swatch-inner" style="background:linear-gradient(135deg,#0e0018,#280050)"><span class="theme-swatch-name" style="color:#cc44cc">Vapor</span></div></div>
+          <div class="theme-swatch" data-theme="matrix"><div class="theme-swatch-inner" style="background:linear-gradient(135deg,#020800,#0a1a00)"><span class="theme-swatch-name" style="color:#22cc44">Matrix</span></div></div>
+          <div class="theme-swatch" data-theme="arctic"><div class="theme-swatch-inner" style="background:linear-gradient(135deg,#f0f2f5,#ccd0d8)"><span class="theme-swatch-name" style="color:#2255cc">Arctic</span></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="stitle">Features</div>
+        <div>
+          <div class="toggle-row"><div class="toggle-info"><span class="toggle-label">Sound Effects</span><span class="toggle-desc">Tones on send & receive</span></div><label class="toggle-switch"><input type="checkbox" id="toggle-sound"><div class="toggle-track"></div></label></div>
+          <div class="toggle-row"><div class="toggle-info"><span class="toggle-label">Timestamps</span><span class="toggle-desc">Show time on messages</span></div><label class="toggle-switch"><input type="checkbox" id="toggle-timestamps"><div class="toggle-track"></div></label></div>
+          <div class="toggle-row"><div class="toggle-info"><span class="toggle-label">Typing Animation</span><span class="toggle-desc">Dots while AI thinks</span></div><label class="toggle-switch"><input type="checkbox" id="toggle-typing" checked><div class="toggle-track"></div></label></div>
+          <div class="toggle-row"><div class="toggle-info"><span class="toggle-label">Send on Enter</span><span class="toggle-desc">Enter sends, Shift+Enter newline</span></div><label class="toggle-switch"><input type="checkbox" id="toggle-enter" checked><div class="toggle-track"></div></label></div>
+          <div class="toggle-row"><div class="toggle-info"><span class="toggle-label">Auto Memory</span><span class="toggle-desc">AI learns from your chats</span></div><label class="toggle-switch"><input type="checkbox" id="toggle-memory" checked><div class="toggle-track"></div></label></div>
+        </div>
+      </div>
+      <button class="save-btn" id="save-settings">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STORAGE ──
+const LS = { get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set: (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+const DEFAULTS = { aiName:'ProBase', headerTitle:'BMT ProBase', personality:'', theme:'default', sound:false, timestamps:false, typingAnim:true, enterSend:true, autoMemory:true, activePreset:'default' };
+let cfg = { ...DEFAULTS, ...(LS.get('bmt_cfg') || {}) };
+let memories = LS.get('bmt_memories') || [];
+let sessions = LS.get('bmt_sessions') || {};
+let currentId = null;
+let isLoading = false;
+let attachedFile = null;
+let sidebarOpen = true;
+
+const API_KEY = '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';
+const PRESETS = { default:'', professional:'Respond formally and precisely. No casual language.', casual:'Be warm, friendly, and conversational.', concise:'Be extremely concise. Shortest possible answer that fully helps.', tutor:'Act as a patient tutor. Explain step by step with examples.', sarcastic:'Be witty and lightly sarcastic — helpful but with dry humor.' };
+
+function saveMemories() { LS.set('bmt_memories', memories); }
+function saveSessions() { LS.set('bmt_sessions', sessions); }
+function curSess() { return sessions[currentId]; }
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+
+function buildSystemPrompt() {
+  const n = cfg.aiName || 'ProBase';
+  const t = cfg.headerTitle || 'BMT ProBase';
+  const p = cfg.personality || PRESETS[cfg.activePreset] || '';
+  const mem = memories.length ? `\n\nThings you remember about the user:\n${memories.map((m,i)=>`${i+1}. ${m}`).join('\n')}\nReference these naturally — make the user feel known and understood.` : '';
+  return `You are ${n}, the AI assistant of ${t}.${p ? ' '+p : ''}${mem}
+
+Self-knowledge — answer accurately when asked about features:
+- Chat input is at the bottom. ⊕ button attaches files or images.
+- Left sidebar lists all saved chat sessions (persistent across reloads). Click any to switch. ＋ New Chat starts a fresh conversation.
+- 🧠 Memory button (bottom of sidebar) shows everything remembered about the user. Auto-extracted from chats, manually editable.
+- ⚙ Settings (top-right): Identity (AI name, header title), Personality (custom prompt + presets: Default/Professional/Casual/Ultra-concise/Tutor/Sarcastic), Themes (Void/Midnight/Ember/Vapor/Matrix/Arctic), Sound Effects, Timestamps, Typing Animation, Send on Enter, Auto Memory.
+- ⌫ clears current chat. Sessions and memories persist in localStorage.
+
+Formatting: **bold** for emphasis, bullet/numbered lists for lists, ## for headings, fenced code blocks with language tag, \`\`\`text\\n...\\n\`\`\` for written content. Normal replies: plain markdown, no wrapping block.`;
+}
+
+// ── AUDIO ──
+let actx = null;
+function tone(freq, dur, vol=0.07) {
+  if (!cfg.sound) return;
+  try { if (!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); const o=actx.createOscillator(),g=actx.createGain(); o.connect(g); g.connect(actx.destination); o.type='sine'; o.frequency.value=freq; g.gain.setValueAtTime(vol,actx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,actx.currentTime+dur); o.start(actx.currentTime); o.stop(actx.currentTime+dur); } catch {}
+}
+function playSend() { tone(660,0.1); }
+function playRecv() { tone(440,0.09,0.05); setTimeout(()=>tone(550,0.11,0.04),75); }
+
+// ── DOM ──
+const chatEl=document.getElementById('chat'), inputEl=document.getElementById('input'), sendBtn=document.getElementById('send');
+const attachBtn=document.getElementById('attach-btn'), fileInput=document.getElementById('file-input');
+const attPreview=document.getElementById('attachment-preview'), attImg=document.getElementById('att-img'), attIcon=document.getElementById('att-icon'), attName=document.getElementById('att-name'), removeAtt=document.getElementById('remove-att');
+const sidebar=document.getElementById('sidebar'), sessionsList=document.getElementById('sessions-list');
+const newChatBtn=document.getElementById('new-chat-btn'), sidebarToggle=document.getElementById('sidebar-toggle');
+const headerTitleEl=document.getElementById('header-title');
+const settingsOverlay=document.getElementById('settings-overlay'), settingsBtn=document.getElementById('settings-btn'), closeSettingsBtn=document.getElementById('close-settings');
+const clearBtn=document.getElementById('clear-btn');
+const memOverlay=document.getElementById('memory-overlay'), memOpenBtn=document.getElementById('memory-open-btn'), closeMemBtn=document.getElementById('close-memory');
+const memoryList=document.getElementById('memory-list'), newMemInput=document.getElementById('new-memory-input'), addMemBtn=document.getElementById('add-memory-btn');
+const aiNameInput=document.getElementById('ai-name-input'), headerTitleInput=document.getElementById('header-title-input'), personalityInput=document.getElementById('personality-input');
+const tSound=document.getElementById('toggle-sound'), tTS=document.getElementById('toggle-timestamps'), tTyping=document.getElementById('toggle-typing'), tEnter=document.getElementById('toggle-enter'), tMem=document.getElementById('toggle-memory');
+const saveBtn=document.getElementById('save-settings');
+
+// ── SESSIONS ──
+function newSession() {
+  const id = genId();
+  sessions[id] = { id, name:'New Chat', messages:[] };
+  saveSessions(); switchSession(id); renderSessions();
+}
+function switchSession(id) { currentId = id; renderSessions(); replayChat(); }
+function deleteSession(id) {
+  delete sessions[id]; saveSessions();
+  const rem = Object.keys(sessions);
+  if (!rem.length) { newSession(); return; }
+  if (currentId === id) switchSession(rem[rem.length-1]);
+  else renderSessions();
+}
+function nameSession(id) {
+  if (!sessions[id]) return;
+  const msgs = sessions[id].messages;
+  const first = msgs.find(m => m.role === 'user');
+  if (first) { const t = first.display||first.content||''; sessions[id].name = t.slice(0,34)+(t.length>34?'…':''); saveSessions(); renderSessions(); }
+}
+function renderSessions() {
+  sessionsList.innerHTML='';
+  const ids = Object.keys(sessions).sort((a,b) => {
+    const am=sessions[a].messages, bm=sessions[b].messages;
+    return (bm.length?bm[bm.length-1].ts||0:0)-(am.length?am[am.length-1].ts||0:0);
+  });
+  if (!ids.length) { sessionsList.innerHTML='<div style="font-size:11px;color:var(--text5);font-family:IBM Plex Mono,monospace;padding:12px 10px">no sessions yet</div>'; return; }
+  ids.forEach(id => {
+    const s=sessions[id]; const div=document.createElement('div'); div.className='session-item'+(id===currentId?' active':'');
+    const nm=document.createElement('div'); nm.className='session-item-name'; nm.textContent=s.name; nm.onclick=()=>switchSession(id);
+    const del=document.createElement('button'); del.className='session-del'; del.textContent='×'; del.onclick=e=>{e.stopPropagation();deleteSession(id);};
+    div.appendChild(nm); div.appendChild(del); sessionsList.appendChild(div);
+  });
+}
+
+// ── RENDER ──
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtTime(ts){const d=ts?new Date(ts):new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+function mkCopy(text){const b=document.createElement('button');b.className='copy-btn';b.textContent='Copy';b.onclick=()=>navigator.clipboard.writeText(text).then(()=>{b.textContent='✓ Copied';b.classList.add('copied');setTimeout(()=>{b.textContent='Copy';b.classList.remove('copied');},2000)});return b;}
+
+function renderMd(text) {
+  let h=escHtml(text);
+  h=h.replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h1>$1</h1>');
+  h=h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>');
+  h=h.replace(/`([^`]+)`/g,'<code>$1</code>').replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>');
+  h=h.replace(/^\- (.+)$/gm,'<li>$1</li>').replace(/(<li>.*<\/li>)/s,'<ul>$1</ul>').replace(/^\d+\. (.+)$/gm,'<li>$1</li>');
+  const lines=h.split('\n');const paras=[];let buf=[];
+  for(const l of lines){if(l.trim()===''){if(buf.length){paras.push('<p>'+buf.join('<br>')+'</p>');buf=[];}}else if(/^<(h[123]|ul|ol|blockquote|li)/.test(l.trim())){if(buf.length){paras.push('<p>'+buf.join('<br>')+'</p>');buf=[];}paras.push(l);}else buf.push(l);}
+  if(buf.length)paras.push('<p>'+buf.join('<br>')+'</p>');return paras.join('');
+}
+function parseSegs(raw) {
+  const segs=[],fence=/```(\w*)\n?([\s\S]*?)```/g;let last=0,m;
+  while((m=fence.exec(raw))!==null){if(m.index>last){const p=raw.slice(last,m.index).trim();if(p)segs.push({type:'prose',content:p});}const lang=m[1].toLowerCase()||'code';const c=m[2].trimEnd();segs.push(lang==='text'?{type:'text',content:c}:{type:'code',lang,content:c});last=m.index+m[0].length;}
+  if(last<raw.length){const r=raw.slice(last).trim();if(r)segs.push({type:'prose',content:r});}return segs;
+}
+
+function renderUserMsg(displayText, ts, fileInfo, anim=true) {
+  document.getElementById('empty-state')?.remove();
+  const div=document.createElement('div');div.className='msg-user';if(!anim)div.style.animation='none';
+  if(fileInfo){if(fileInfo.isImage&&fileInfo.dataUrl){const img=document.createElement('img');img.src=fileInfo.dataUrl;img.className='img-preview';div.appendChild(img);}else if(fileInfo.name){const c=document.createElement('div');c.className='file-chip';c.textContent='📄 '+fileInfo.name;div.appendChild(c);}}
+  if(displayText){const s=document.createElement('span');s.textContent=displayText;div.appendChild(s);}
+  if(cfg.timestamps&&ts){const t=document.createElement('div');t.className='msg-ts';t.textContent=fmtTime(ts);div.appendChild(t);}
+  chatEl.appendChild(div);
+}
+
+function renderBotMsg(raw, ts, anim=true) {
+  document.getElementById('empty-state')?.remove();
+  const wrap=document.createElement('div');wrap.className='msg-bot';if(!anim)wrap.style.animation='none';
+  const lbl=document.createElement('div');lbl.className='bot-label';lbl.textContent=cfg.aiName||'ProBase';wrap.appendChild(lbl);
+  parseSegs(raw).forEach(seg=>{
+    if(seg.type==='prose'){const d=document.createElement('div');d.className='bot-prose';d.innerHTML=renderMd(seg.content);wrap.appendChild(d);}
+    else if(seg.type==='text'){const bl=document.createElement('div');bl.className='content-block';const hd=document.createElement('div');hd.className='block-header';const lb=document.createElement('span');lb.className='block-label';lb.textContent='text';hd.appendChild(lb);hd.appendChild(mkCopy(seg.content));bl.appendChild(hd);const bd=document.createElement('div');bd.className='block-text';bd.textContent=seg.content;bl.appendChild(bd);wrap.appendChild(bl);}
+    else{const bl=document.createElement('div');bl.className='code-block';const hd=document.createElement('div');hd.className='code-header';const la=document.createElement('span');la.className='code-lang';la.textContent=seg.lang;hd.appendChild(la);hd.appendChild(mkCopy(seg.content));bl.appendChild(hd);const bd=document.createElement('div');bd.className='code-body';bd.textContent=seg.content;bl.appendChild(bd);wrap.appendChild(bl);}
+  });
+  if(cfg.timestamps&&ts){const t=document.createElement('div');t.className='msg-ts';t.textContent=fmtTime(ts);wrap.appendChild(t);}
+  chatEl.appendChild(wrap);
+}
+
+function addTyping(){if(!cfg.typingAnim)return null;const d=document.createElement('div');d.className='typing';d.innerHTML='<span></span><span></span><span></span>';chatEl.appendChild(d);chatEl.scrollTop=chatEl.scrollHeight;return d;}
+function addError(msg){const d=document.createElement('div');d.className='msg-bot';d.innerHTML='<div style="color:#774444;font-size:13px;padding:4px 0">'+escHtml(msg)+'</div>';chatEl.appendChild(d);chatEl.scrollTop=chatEl.scrollHeight;}
+
+function replayChat() {
+  chatEl.innerHTML='';
+  const sess=curSess();
+  if(!sess||!sess.messages.length){chatEl.innerHTML='<div id="empty-state">send a message to start</div>';return;}
+  sess.messages.forEach(msg=>{
+    if(msg.role==='user')renderUserMsg(msg.display||msg.content,msg.ts,msg.fileInfo||null,false);
+    else if(msg.role==='assistant')renderBotMsg(msg.content,msg.ts,false);
+  });
+  chatEl.scrollTop=chatEl.scrollHeight;
+}
+
+// ── AUTO MEMORY EXTRACTION ──
+async function extractMemories(userMsg, aiReply) {
+  if (!cfg.autoMemory || !userMsg.trim()) return;
+  const existing = memories.length ? `\nAlready known:\n${memories.map((m,i)=>`${i+1}. ${m}`).join('\n')}` : '';
+  const prompt = `You are a memory extraction system. From the conversation below, extract NEW personal facts about the user worth remembering long-term (name, age, location, job, hobbies, goals, opinions, projects, preferences, habits, relationships, etc).
+${existing}
+
+User: "${userMsg.slice(0,300)}"
+AI: "${aiReply.slice(0,300)}"
+
+Output ONLY a JSON array of short factual strings (like "User's name is Alex", "User is learning Python", "User lives in Berlin"). If nothing new, output []. No explanation, no markdown, no backticks.`;
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_KEY}, body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:250,messages:[{role:'user',content:prompt}]}) });
+    const d = await r.json();
+    const txt = (d.choices?.[0]?.message?.content||'[]').replace(/```json|```/g,'').trim();
+    const arr = JSON.parse(txt);
+    if(Array.isArray(arr)&&arr.length){ arr.forEach(m=>{if(typeof m==='string'&&m.trim()&&!memories.includes(m.trim()))memories.push(m.trim());}); saveMemories(); }
+  } catch {}
+}
+
+// ── SEND ──
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if((!text&&!attachedFile)||isLoading) return;
+  isLoading=true; sendBtn.disabled=true; inputEl.value=''; inputEl.style.height='auto';
+  const file=attachedFile; clearAttachment();
+  const ts=Date.now();
+  let apiContent=''; let fileInfo=null;
+  if(file){fileInfo={name:file.name,isImage:file.isImage,dataUrl:file.isImage?file.content:null};apiContent=file.isImage?`[Image: ${file.name}]\n`:`[File: ${file.name}]\n\`\`\`\n${file.content}\n\`\`\`\n`;}
+  if(text) apiContent+=text;
+  const sess=curSess();
+  sess.messages.push({role:'user',content:apiContent,display:text,ts,fileInfo});
+  if(sess.messages.length===1)nameSession(currentId);
+  saveSessions();
+  renderUserMsg(text,ts,fileInfo,true); chatEl.scrollTop=chatEl.scrollHeight; playSend();
+  const typing=addTyping();
+  const apiHistory=sess.messages.map(m=>({role:m.role,content:m.content}));
+  try {
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_KEY},body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:buildSystemPrompt()},...apiHistory]})});
+    const data=await res.json();
+    if(typing)typing.remove();
+    if(!res.ok){addError('Error: '+(data?.error?.message||'Something went wrong'));sess.messages.pop();saveSessions();}
+    else {
+      const reply=data.choices?.[0]?.message?.content||'(no response)';
+      const rts=Date.now();
+      sess.messages.push({role:'assistant',content:reply,ts:rts});
+      saveSessions(); renderBotMsg(reply,rts,true); chatEl.scrollTop=chatEl.scrollHeight; playRecv();
+      extractMemories(text,reply);
+    }
+  } catch(err) { if(typing)typing.remove(); addError('Network error: '+err.message); sess.messages.pop(); saveSessions(); }
+  isLoading=false; sendBtn.disabled=false; inputEl.focus();
+}
+
+// ── MEMORY PANEL ──
+function renderMemoryList() {
+  memoryList.innerHTML='';
+  if(!memories.length){const p=document.createElement('div');p.id='no-memories';p.textContent='No memories yet — start chatting!';memoryList.appendChild(p);return;}
+  memories.forEach((m,i)=>{
+    const e=document.createElement('div');e.className='memory-entry';
+    const t=document.createElement('div');t.className='memory-entry-text';t.textContent=m;
+    const d=document.createElement('button');d.className='memory-entry-del';d.textContent='×';d.onclick=()=>{memories.splice(i,1);saveMemories();renderMemoryList();};
+    e.appendChild(t);e.appendChild(d);memoryList.appendChild(e);
+  });
+}
+memOpenBtn.addEventListener('click',()=>{renderMemoryList();memOverlay.classList.add('open');});
+closeMemBtn.addEventListener('click',()=>memOverlay.classList.remove('open'));
+memOverlay.addEventListener('click',e=>{if(e.target===memOverlay)memOverlay.classList.remove('open');});
+addMemBtn.addEventListener('click',()=>{const v=newMemInput.value.trim();if(!v)return;memories.push(v);saveMemories();newMemInput.value='';renderMemoryList();});
+newMemInput.addEventListener('keydown',e=>{if(e.key==='Enter')addMemBtn.click();});
+
+// ── SETTINGS ──
+function applySettings(){document.body.className=cfg.theme==='default'?'':'theme-'+cfg.theme;headerTitleEl.innerHTML=(cfg.headerTitle||'BMT ProBase')+' <span>/ AI</span>';}
+function loadSettingsUI(){aiNameInput.value=cfg.aiName||'';headerTitleInput.value=cfg.headerTitle||'';personalityInput.value=cfg.personality||'';tSound.checked=cfg.sound;tTS.checked=cfg.timestamps;tTyping.checked=cfg.typingAnim;tEnter.checked=cfg.enterSend;tMem.checked=cfg.autoMemory;document.querySelectorAll('.theme-swatch').forEach(s=>s.classList.toggle('active',s.dataset.theme===cfg.theme));document.querySelectorAll('.preset-chip').forEach(c=>c.classList.toggle('active',c.dataset.preset===cfg.activePreset));}
+applySettings();
+settingsBtn.addEventListener('click',()=>{loadSettingsUI();settingsOverlay.classList.add('open');settingsBtn.classList.add('active');});
+closeSettingsBtn.addEventListener('click',()=>{settingsOverlay.classList.remove('open');settingsBtn.classList.remove('active');});
+settingsOverlay.addEventListener('click',e=>{if(e.target===settingsOverlay){settingsOverlay.classList.remove('open');settingsBtn.classList.remove('active');}});
+document.getElementById('theme-grid').addEventListener('click',e=>{const s=e.target.closest('.theme-swatch');if(!s)return;document.querySelectorAll('.theme-swatch').forEach(x=>x.classList.remove('active'));s.classList.add('active');cfg.theme=s.dataset.theme;applySettings();});
+document.querySelectorAll('.preset-chip').forEach(chip=>chip.addEventListener('click',()=>{document.querySelectorAll('.preset-chip').forEach(c=>c.classList.remove('active'));chip.classList.add('active');cfg.activePreset=chip.dataset.preset;personalityInput.value=PRESETS[chip.dataset.preset]||'';cfg.personality=personalityInput.value;}));
+saveBtn.addEventListener('click',()=>{cfg.aiName=aiNameInput.value.trim()||'ProBase';cfg.headerTitle=headerTitleInput.value.trim()||'BMT ProBase';cfg.personality=personalityInput.value.trim();cfg.sound=tSound.checked;cfg.timestamps=tTS.checked;cfg.typingAnim=tTyping.checked;cfg.enterSend=tEnter.checked;cfg.autoMemory=tMem.checked;LS.set('bmt_cfg',cfg);applySettings();saveBtn.textContent='✓ Saved';saveBtn.classList.add('saved');setTimeout(()=>{saveBtn.textContent='Save Settings';saveBtn.classList.remove('saved');},2000);});
+
+// ── SIDEBAR ──
+sidebarToggle.addEventListener('click',()=>{sidebarOpen=!sidebarOpen;sidebar.classList.toggle('collapsed',!sidebarOpen);});
+newChatBtn.addEventListener('click',newSession);
+clearBtn.addEventListener('click',()=>{if(!curSess())return;curSess().messages=[];saveSessions();chatEl.innerHTML='<div id="empty-state">send a message to start</div>';});
+
+// ── FILE ATTACH ──
+attachBtn.addEventListener('click',()=>fileInput.click());
+fileInput.addEventListener('change',()=>{const f=fileInput.files[0];if(!f)return;const isImage=f.type.startsWith('image/');const r=new FileReader();r.onload=e=>{attachedFile={name:f.name,type:f.type,isImage,content:e.target.result};attName.textContent=f.name;if(isImage){attImg.src=e.target.result;attImg.style.display='block';attIcon.style.display='none';}else{attImg.style.display='none';attIcon.style.display='inline';}attPreview.style.display='flex';};isImage?r.readAsDataURL(f):r.readAsText(f);fileInput.value='';});
+removeAtt.addEventListener('click',clearAttachment);
+function clearAttachment(){attachedFile=null;attPreview.style.display='none';attImg.src='';}
+
+// ── INPUT ──
+inputEl.addEventListener('input',()=>{inputEl.style.height='auto';inputEl.style.height=Math.min(inputEl.scrollHeight,130)+'px';});
+inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&cfg.enterSend){e.preventDefault();sendMessage();}});
+sendBtn.addEventListener('click',sendMessage);
+
+// ── INIT ──
+const existingIds = Object.keys(sessions);
+if(existingIds.length){const sorted=existingIds.sort((a,b)=>{const am=sessions[a].messages,bm=sessions[b].messages;return(bm.length?bm[bm.length-1].ts||0:0)-(am.length?am[am.length-1].ts||0:0);});switchSession(sorted[0]);}
+else newSession();
+renderSessions();
+</script>
+</body>
+</html>
